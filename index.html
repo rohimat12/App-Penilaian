@@ -45,18 +45,27 @@
         <form id="formPenilaian">
             <div class="mb-3">
                 <label for="namaSiswa" class="form-label">Nama Siswa</label>
-                <!-- Atribut 'list' yang terhubung dengan elemen datalist -->
-                <input type="text" class="form-control" id="namaSiswa" list="siswaList" required>
-                <!-- Datalist untuk Autocomplete -->
-                <datalist id="siswaList"></datalist>
+                <!-- Menggunakan elemen 'select' yang akan diisi secara dinamis -->
+                <select class="form-select" id="namaSiswa" required>
+                    <option value="" disabled selected>Memuat nama siswa...</option>
+                </select>
             </div>
             
             <div class="mb-3">
                 <label for="mataPelajaran" class="form-label">Mata Pelajaran</label>
-                <!-- Tambahkan atribut 'list' untuk autocomplete mata pelajaran -->
-                <input type="text" class="form-control" id="mataPelajaran" list="mapelList" required>
-                <!-- Datalist untuk mata pelajaran -->
-                <datalist id="mapelList"></datalist>
+                <!-- Menggunakan select untuk dropdown mata pelajaran yang tetap -->
+                <select class="form-select" id="mataPelajaran" required>
+                    <option value="" disabled selected>Pilih Mata Pelajaran</option>
+                    <option value="PAIBP">PAIBP</option>
+                    <option value="Pendidikan Pancasila">Pendidikan Pancasila</option>
+                    <option value="Bahasa Indonesia">Bahasa Indonesia</option>
+                    <option value="Matematika">Matematika</option>
+                    <option value="IPAS">IPAS</option>
+                    <option value="Seni Rupa">Seni Rupa</option>
+                    <option value="PJOK">PJOK</option>
+                    <option value="Bahasa Inggris">Bahasa Inggris</option>
+                    <option value="Bahasa Sunda">Bahasa Sunda</option>
+                </select>
             </div>
 
             <div class="mb-3">
@@ -97,20 +106,15 @@
 
     <script>
         // SANGAT PENTING: GANTI URL placeholder di bawah ini dengan URL Web App Anda yang sebenarnya.
-        // Caranya:
-        // 1. Buka project Apps Script Anda.
-        // 2. Klik Deploy -> Manage deployments.
-        // 3. Klik ikon pensil, lalu salin URL yang diberikan pada 'Web app URL'.
         const ENDPOINT_API = "https://script.google.com/macros/s/AKfycbz2oiUXmjKw8LCA82n2rz98PdjvCobVt5igRDbxgML6X7aKlp1hvob20-VRVVA0bp30kQ/exec"; 
 
         // Fungsi untuk mengambil data dari Google Apps Script dan mengisi tabel
         function fetchData() {
-            // Mengambil data dari Sheet1 (data penilaian)
             fetch(`${ENDPOINT_API}?sheet=penilaian`)
                 .then(response => response.json())
                 .then(data => {
                     const tabelBody = document.querySelector('#tabelNilai tbody');
-                    tabelBody.innerHTML = ''; // Kosongkan tabel sebelum mengisi
+                    tabelBody.innerHTML = '';
                     data.forEach(row => {
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
@@ -125,34 +129,22 @@
                 .catch(error => console.error('Error fetching penilaian data:', error));
         }
 
-        // Fungsi untuk mengambil data nama siswa dari Sheet2 dan mengisi datalist
+        // Fungsi untuk mengambil data nama siswa dari Sheet2 dan mengisi dropdown
         function populateStudentNames() {
-            // Mengambil data dari Sheet2 (data nama siswa)
             fetch(`${ENDPOINT_API}?sheet=nama_siswa`)
                 .then(response => response.json())
                 .then(data => {
-                    const datalist = document.getElementById('siswaList');
-                    datalist.innerHTML = ''; // Kosongkan datalist sebelum mengisi
+                    const selectElement = document.getElementById('namaSiswa');
+                    selectElement.innerHTML = '<option value="" disabled selected>Pilih Nama Siswa</option>'; // Reset dropdown
+
                     data.forEach(name => {
                         const option = document.createElement('option');
                         option.value = name;
-                        datalist.appendChild(option);
+                        option.textContent = name;
+                        selectElement.appendChild(option);
                     });
                 })
                 .catch(error => console.error('Error fetching student names:', error));
-        }
-
-        // Fungsi baru untuk mengisi datalist Mata Pelajaran
-        function populateMataPelajaran() {
-            // Daftar mata pelajaran yang Anda berikan
-            const mataPelajaranData = ["PAIBP", "Pendidikan Pancasila", "Bahasa Indonesia", "Matematika", "IPAS", "Seni Rupa", "PJOK", "Bahasa Inggris", "Bahasa Sunda"];
-            const datalist = document.getElementById('mapelList');
-            
-            mataPelajaranData.forEach(name => {
-                const option = document.createElement('option');
-                option.value = name;
-                datalist.appendChild(option);
-            });
         }
 
         // Tangani pengiriman formulir
@@ -166,14 +158,12 @@
                 Keterangan: document.getElementById('keterangan').value
             };
 
-            // Kirim data ke Apps Script menggunakan Fetch API
             fetch(`${ENDPOINT_API}?sheet=penilaian`, {
                 method: 'POST',
                 body: new URLSearchParams(dataForm)
             })
             .then(response => response.text())
             .then(result => {
-                // Gunakan Bootstrap alert untuk menampilkan pesan
                 const alertHtml = `
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
                         ${result}
@@ -182,9 +172,7 @@
                 `;
                 document.getElementById('formPenilaian').insertAdjacentHTML('afterend', alertHtml);
 
-                // Reset formulir setelah pengiriman berhasil
                 this.reset();
-                // Muat ulang data tabel
                 fetchData(); 
             })
             .catch(error => console.error('Error:', error));
@@ -194,7 +182,6 @@
         window.onload = function() {
             fetchData();
             populateStudentNames();
-            populateMataPelajaran(); // Panggil fungsi baru ini
         };
     </script>
 </body>
