@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Penilaian Siswa</title>
+    <!-- CSS Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f2f5;
+        }
+        .container {
+            max-width: 800px;
+            margin-top: 50px;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .form-label {
+            font-weight: 500;
+        }
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
+        }
+        .alert {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1 class="text-center mb-4">Form Penilaian Siswa</h1>
+        
+        <form id="formPenilaian">
+            <div class="mb-3">
+                <label for="namaSiswa" class="form-label">Nama Siswa</label>
+                <!-- Atribut 'list' yang terhubung dengan elemen datalist -->
+                <input type="text" class="form-control" id="namaSiswa" list="siswaList" required>
+                <!-- Datalist untuk Autocomplete -->
+                <datalist id="siswaList"></datalist>
+            </div>
+            
+            <div class="mb-3">
+                <label for="mataPelajaran" class="form-label">Mata Pelajaran</label>
+                <!-- Tambahkan atribut 'list' untuk autocomplete mata pelajaran -->
+                <input type="text" class="form-control" id="mataPelajaran" list="mapelList" required>
+                <!-- Datalist untuk mata pelajaran -->
+                <datalist id="mapelList"></datalist>
+            </div>
+
+            <div class="mb-3">
+                <label for="nilai" class="form-label">Nilai</label>
+                <input type="number" class="form-control" id="nilai" min="0" max="100" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="keterangan" class="form-label">Keterangan</label>
+                <textarea class="form-control" id="keterangan"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Simpan Nilai</button>
+        </form>
+
+        <hr class="my-5">
+
+        <h2 class="text-center mb-4">Daftar Nilai</h2>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover" id="tabelNilai">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Nama Siswa</th>
+                        <th>Mata Pelajaran</th>
+                        <th>Nilai</th>
+                        <th>Tanggal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data akan dimuat di sini oleh JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- JavaScript Bootstrap 5 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // SANGAT PENTING: GANTI URL placeholder di bawah ini dengan URL Web App Anda yang sebenarnya.
+        // Caranya:
+        // 1. Buka project Apps Script Anda.
+        // 2. Klik Deploy -> Manage deployments.
+        // 3. Klik ikon pensil, lalu salin URL yang diberikan pada 'Web app URL'.
+        const ENDPOINT_API = "https://script.google.com/macros/s/AKfycbz2oiUXmjKw8LCA82n2rz98PdjvCobVt5igRDbxgML6X7aKlp1hvob20-VRVVA0bp30kQ/exec"; 
+
+        // Fungsi untuk mengambil data dari Google Apps Script dan mengisi tabel
+        function fetchData() {
+            // Mengambil data dari Sheet1 (data penilaian)
+            fetch(`${ENDPOINT_API}?sheet=penilaian`)
+                .then(response => response.json())
+                .then(data => {
+                    const tabelBody = document.querySelector('#tabelNilai tbody');
+                    tabelBody.innerHTML = ''; // Kosongkan tabel sebelum mengisi
+                    data.forEach(row => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${row.Nama_Siswa}</td>
+                            <td>${row.Mata_Pelajaran}</td>
+                            <td>${row.Nilai}</td>
+                            <td>${new Date(row.Tanggal_Penilaian).toLocaleDateString()}</td>
+                        `;
+                        tabelBody.appendChild(tr);
+                    });
+                })
+                .catch(error => console.error('Error fetching penilaian data:', error));
+        }
+
+        // Fungsi untuk mengambil data nama siswa dari Sheet2 dan mengisi datalist
+        function populateStudentNames() {
+            // Mengambil data dari Sheet2 (data nama siswa)
+            fetch(`${ENDPOINT_API}?sheet=nama_siswa`)
+                .then(response => response.json())
+                .then(data => {
+                    const datalist = document.getElementById('siswaList');
+                    datalist.innerHTML = ''; // Kosongkan datalist sebelum mengisi
+                    data.forEach(name => {
+                        const option = document.createElement('option');
+                        option.value = name;
+                        datalist.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching student names:', error));
+        }
+
+        // Fungsi baru untuk mengisi datalist Mata Pelajaran
+        function populateMataPelajaran() {
+            // Daftar mata pelajaran yang Anda berikan
+            const mataPelajaranData = ["PAIBP", "Pendidikan Pancasila", "Bahasa Indonesia", "Matematika", "IPAS", "Seni Rupa", "PJOK", "Bahasa Inggris", "Bahasa Sunda"];
+            const datalist = document.getElementById('mapelList');
+            
+            mataPelajaranData.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                datalist.appendChild(option);
+            });
+        }
+
+        // Tangani pengiriman formulir
+        document.getElementById('formPenilaian').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const dataForm = {
+                Nama_Siswa: document.getElementById('namaSiswa').value,
+                Mata_Pelajaran: document.getElementById('mataPelajaran').value,
+                Nilai: document.getElementById('nilai').value,
+                Keterangan: document.getElementById('keterangan').value
+            };
+
+            // Kirim data ke Apps Script menggunakan Fetch API
+            fetch(`${ENDPOINT_API}?sheet=penilaian`, {
+                method: 'POST',
+                body: new URLSearchParams(dataForm)
+            })
+            .then(response => response.text())
+            .then(result => {
+                // Gunakan Bootstrap alert untuk menampilkan pesan
+                const alertHtml = `
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        ${result}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+                document.getElementById('formPenilaian').insertAdjacentHTML('afterend', alertHtml);
+
+                // Reset formulir setelah pengiriman berhasil
+                this.reset();
+                // Muat ulang data tabel
+                fetchData(); 
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        // Jalankan semua fungsi saat halaman dimuat
+        window.onload = function() {
+            fetchData();
+            populateStudentNames();
+            populateMataPelajaran(); // Panggil fungsi baru ini
+        };
+    </script>
+</body>
+</html>
